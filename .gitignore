@@ -1,0 +1,7 @@
+/vendor
+/builds
+/.laracord
+*.sqlite
+.env
+
+.DS_Store
