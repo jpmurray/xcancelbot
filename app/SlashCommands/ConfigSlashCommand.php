@@ -89,13 +89,14 @@ class ConfigSlashCommand extends SlashCommand
         }
         
         $guildId = $interaction->guild_id;
+        $guildName = $interaction->guild?->name;
         
         $setting = $this->value('setting');
         $value = $this->value('value');
         
         // If no setting provided, show current settings
         if (!$setting) {
-            return $this->showCurrentSettings($interaction, $guildId);
+            return $this->showCurrentSettings($interaction, $guildId, $guildName);
         }
         
         // If setting provided but no value, show help for that setting
@@ -104,15 +105,15 @@ class ConfigSlashCommand extends SlashCommand
         }
         
         // Update the setting
-        $this->updateSetting($interaction, $guildId, $setting, $value);
+        $this->updateSetting($interaction, $guildId, $setting, $value, $guildName);
     }
 
     /**
      * Show current settings
      */
-    private function showCurrentSettings($interaction, $guildId)
+    private function showCurrentSettings($interaction, $guildId, $guildName = null)
     {
-        $settings = GuildSetting::getForGuild($guildId);
+        $settings = GuildSetting::getForGuild($guildId, $guildName);
         
         $interaction->respondWithMessage(
             $this
@@ -155,7 +156,7 @@ class ConfigSlashCommand extends SlashCommand
     /**
      * Update a setting
      */
-    private function updateSetting($interaction, $guildId, $setting, $value)
+    private function updateSetting($interaction, $guildId, $setting, $value, $guildName = null)
     {
         $dbKey = match($setting) {
             'enabled' => 'enabled',
@@ -172,7 +173,7 @@ class ConfigSlashCommand extends SlashCommand
             return;
         }
         
-        GuildSetting::updateForGuild($guildId, $dbKey, $value);
+        GuildSetting::updateForGuild($guildId, $dbKey, $value, $guildName);
         
         $displayValue = $value ? '✅ Enabled' : '❌ Disabled';
         $settingName = ucfirst($setting);
