@@ -180,6 +180,7 @@ return [
 
     'events' => [
         \App\Events\MessageCreate::class,
+        \App\Events\GuildDelete::class,
     ],
 
 ];
