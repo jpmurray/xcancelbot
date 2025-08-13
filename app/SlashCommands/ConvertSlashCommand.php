@@ -87,10 +87,11 @@ class ConvertSlashCommand extends SlashCommand
         // Increment stats
         $guildId = $interaction->guild_id;
         if ($guildId) {
+            $guildName = $interaction->guild?->name;
             GuildSetting::incrementStats($guildId, [
                 'twitter_conversions' => $conversionResult->stats['twitter'],
                 'x_conversions' => $conversionResult->stats['x'],
-            ]);
+            ], $guildName);
         }
 
         // Send ephemeral response with converted links

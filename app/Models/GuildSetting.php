@@ -8,6 +8,7 @@ class GuildSetting extends Model
 {
     protected $fillable = [
         'guild_id',
+        'guild_name',
         'enabled',
         'show_credit',
         'auto_mode',
@@ -26,37 +27,94 @@ class GuildSetting extends Model
     /**
      * Get settings for a guild, creating defaults if not exists
      */
-    public static function getForGuild(string $guildId): self
+    public static function getForGuild(string $guildId, ?string $guildName = null): self
     {
-        return static::firstOrCreate(
-            ['guild_id' => $guildId],
-            [
+        $setting = static::where('guild_id', $guildId)->first();
+        
+        // If setting doesn't exist, create it
+        if (!$setting) {
+            $attributes = [
+                'guild_id' => $guildId,
                 'enabled' => true,
                 'show_credit' => true,
                 'auto_mode' => true,
                 'twitter_conversions' => 0,
                 'x_conversions' => 0,
-            ]
-        );
+            ];
+            
+            if ($guildName) {
+                $attributes['guild_name'] = $guildName;
+            }
+            
+            $setting = static::create($attributes);
+        } else {
+            // Only update guild name if provided and different
+            if ($guildName && $setting->guild_name !== $guildName) {
+                $setting->update(['guild_name' => $guildName]);
+            }
+        }
+        
+        return $setting;
     }
 
     /**
      * Update setting for a guild
      */
-    public static function updateForGuild(string $guildId, string $key, $value): void
+    public static function updateForGuild(string $guildId, string $key, $value, ?string $guildName = null): void
     {
-        static::updateOrCreate(
-            ['guild_id' => $guildId],
-            [$key => $value]
-        );
+        $setting = static::where('guild_id', $guildId)->first();
+        
+        if (!$setting) {
+            // Create new setting if it doesn't exist
+            $attributes = [
+                'guild_id' => $guildId,
+                $key => $value,
+                'enabled' => true,
+                'show_credit' => true,
+                'auto_mode' => true,
+                'twitter_conversions' => 0,
+                'x_conversions' => 0,
+            ];
+            
+            if ($guildName) {
+                $attributes['guild_name'] = $guildName;
+            }
+            
+            static::create($attributes);
+        } else {
+            // Only update if values are different
+            $updates = [];
+            
+            if ($setting->$key !== $value) {
+                $updates[$key] = $value;
+            }
+            
+            if ($guildName && $setting->guild_name !== $guildName) {
+                $updates['guild_name'] = $guildName;
+            }
+            
+            if (!empty($updates)) {
+                $setting->update($updates);
+            }
+        }
     }
 
     /**
      * Increment conversion statistics for a guild
      */
-    public static function incrementStats(string $guildId, array $stats): void
+    public static function incrementStats(string $guildId, array $stats, ?string $guildName = null): void
     {
-        $setting = static::firstOrCreate(['guild_id' => $guildId]);
+        $defaults = [];
+        if ($guildName) {
+            $defaults['guild_name'] = $guildName;
+        }
+        
+        $setting = static::firstOrCreate(['guild_id' => $guildId], $defaults);
+        
+        // Update guild name if provided and different
+        if ($guildName && $setting->guild_name !== $guildName) {
+            $setting->update(['guild_name' => $guildName]);
+        }
         
         if (isset($stats['twitter_conversions'])) {
             $setting->increment('twitter_conversions', $stats['twitter_conversions']);

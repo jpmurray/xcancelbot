@@ -68,13 +68,16 @@ class StatsSlashCommand extends SlashCommand
             return;
         }
         
-        $settings = GuildSetting::getForGuild($guildId);
+        $guildName = $interaction->guild?->name;
+        $settings = GuildSetting::getForGuild($guildId, $guildName);
         $totalConversions = $settings->twitter_conversions + $settings->x_conversions;
+        
+        $title = $settings->guild_name ? "📊 {$settings->guild_name} Statistics" : '📊 X-Cancel Server Statistics';
         
         $interaction->respondWithMessage(
             $this
                 ->message('Server conversion statistics')
-                ->title('📊 X-Cancel Server Statistics')
+                ->title($title)
                 ->field('Twitter Links Converted', number_format($settings->twitter_conversions), true)
                 ->field('X.com Links Converted', number_format($settings->x_conversions), true)
                 ->field('Total Conversions', number_format($totalConversions), true)
