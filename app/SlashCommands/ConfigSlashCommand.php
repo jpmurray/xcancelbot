@@ -82,7 +82,8 @@ class ConfigSlashCommand extends SlashCommand
         // Check if user has admin permissions (server owner or configured admin)
         if (!$this->isUserAdmin($interaction)) {
             $interaction->respondWithMessage(
-                $this->message('❌ You need admin permissions to use this command.')->build()
+                $this->message('❌ You need admin permissions to use this command.')->build(),
+                true // ephemeral - only visible to the user
             );
             return;
         }
@@ -165,7 +166,8 @@ class ConfigSlashCommand extends SlashCommand
         
         if (!$dbKey) {
             $interaction->respondWithMessage(
-                $this->message('❌ Invalid setting provided.')->build()
+                $this->message('❌ Invalid setting provided.')->build(),
+                true // ephemeral - only visible to the user
             );
             return;
         }
