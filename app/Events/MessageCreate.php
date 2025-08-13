@@ -14,13 +14,6 @@ use Laracord\Events\Event;
 class MessageCreate extends Event
 {
     protected $handler = Events::MESSAGE_CREATE;
-    
-    protected LinkConversionService $linkConverter;
-
-    public function __construct(LinkConversionService $linkConverter)
-    {
-        $this->linkConverter = $linkConverter;
-    }
 
     public function handle(Message $message, Discord $discord)
     {
@@ -38,6 +31,9 @@ class MessageCreate extends Event
             return;
         }
 
+        // Get the link conversion service from the container
+        $linkConverter = app(LinkConversionService::class);
+
         $content = $message->content;
         
         // Check if this is a manual conversion command
@@ -47,9 +43,9 @@ class MessageCreate extends Event
                 $referencedMessageId = $message->message_reference->message_id;
                 
                 // Fetch the referenced message
-                $message->channel->messages->fetch($referencedMessageId)->then(function ($referencedMessage) use ($message, $discord, $settings, $guildId) {
-                    if ($referencedMessage && $this->linkConverter->containsTwitterLink($referencedMessage->content)) {
-                        $conversionResult = $this->linkConverter->convert($referencedMessage->content);
+                $message->channel->messages->fetch($referencedMessageId)->then(function ($referencedMessage) use ($message, $discord, $settings, $guildId, $linkConverter) {
+                    if ($referencedMessage && $linkConverter->containsTwitterLink($referencedMessage->content)) {
+                        $conversionResult = $linkConverter->convert($referencedMessage->content);
                         if ($conversionResult) {
                             GuildSetting::incrementStats($guildId, [
                                 'twitter_conversions' => $conversionResult->stats['twitter'],
@@ -64,8 +60,8 @@ class MessageCreate extends Event
         }
         
         // Auto mode: Check if the message contains X/Twitter links
-        if ($settings->auto_mode && $this->linkConverter->containsTwitterLink($content)) {
-            $conversionResult = $this->linkConverter->convert($content);
+        if ($settings->auto_mode && $linkConverter->containsTwitterLink($content)) {
+            $conversionResult = $linkConverter->convert($content);
             if ($conversionResult) {
                 GuildSetting::incrementStats($guildId, [
                     'twitter_conversions' => $conversionResult->stats['twitter'],
