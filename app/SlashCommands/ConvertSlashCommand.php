@@ -10,12 +10,6 @@ use Laracord\Commands\SlashCommand;
 
 class ConvertSlashCommand extends SlashCommand
 {
-    protected LinkConversionService $linkConverter;
-
-    public function __construct(LinkConversionService $linkConverter)
-    {
-        $this->linkConverter = $linkConverter;
-    }
 
     /**
      * The command name.
@@ -74,8 +68,11 @@ class ConvertSlashCommand extends SlashCommand
      */
     public function handle($interaction)
     {
+        // Get the link conversion service from the container
+        $linkConverter = app(LinkConversionService::class);
+        
         $link = $this->value('link');
-        $conversionResult = $this->linkConverter->convert($link);
+        $conversionResult = $linkConverter->convert($link);
 
         if (!$conversionResult) {
             $interaction->respondWithMessage(
